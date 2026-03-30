@@ -152,7 +152,7 @@ function App() {
 
         <div
           className="flex flex-col h-screen bg-[#F4F6F9] overflow-hidden"
-          style={{ maxWidth: '448px', margin: '0 auto' }}
+          style={{ maxWidth: '448px', margin: '0 auto', paddingTop: 'env(safe-area-inset-top, 0px)' }}
         >
           <OfflineToast />
 

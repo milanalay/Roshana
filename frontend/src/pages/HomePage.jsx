@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { drugs, categoryColors, scheduleColors } from '../data/drugs';
 import { DrugDetailSheet } from '../components/DrugDetailSheet';
-import { APP_VERSION, getAppStats } from '../data/meta';
 
 // ─────────────────────────────────────────────────────────────
 // Design tokens
@@ -408,14 +407,6 @@ const HomePage = ({ onNavigate }) => {
           <SuffixCheatSheet onNavigate={onNavigate} />
           <TipsTicker />
         </div>
-        {/* Version footer */}
-        <p
-          className="text-center text-gray-300 pb-1"
-          style={{ fontFamily: FONTS.body, fontSize: '10px' }}
-          data-testid="version-footer"
-        >
-          Roshana v{APP_VERSION} · {getAppStats().drugs} drugs · Educational use only
-        </p>
         <div className="h-6" />
       </div>
       <ScrollToTopBtn scrollRef={scrollRef} />
