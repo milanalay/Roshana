@@ -1,8 +1,4 @@
 {
-  "buildCommand": "npm install && npm run build",
-  "outputDirectory": "build",
-  "installCommand": "npm install",
-  "framework": "create-react-app",
   "rewrites": [
     {
       "source": "/((?!api|_next|favicon.ico|icons|manifest.json|sw.js|robots.txt).*)",
