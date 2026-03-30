@@ -1733,7 +1733,7 @@ const ToolsPage = ({ onNavigate }) => {
 
       {/* Scrollable content */}
       <div
-        className="flex-1 overflow-hidden flex flex-col"
+        className="flex-1 overflow-y-auto"
         role="tabpanel"
         data-testid={`tools-panel-${activeTab}`}
       >
@@ -1741,8 +1741,16 @@ const ToolsPage = ({ onNavigate }) => {
         {activeTab === 'flashcards' && <DrugFlashcards />}
         {activeTab === 'rights'     && <MedRightsChecker />}
         {activeTab === 'rounding'   && <DoseRounder />}
-        {activeTab === 'pharm'      && <PharmPage onNavigate={onNavigate} />}
-        {activeTab === 'abbrev'     && <MedAbbreviations />}
+        {activeTab === 'pharm'      && (
+          <div className="flex flex-col overflow-hidden" style={{ height: '100%' }}>
+            <PharmPage onNavigate={onNavigate} />
+          </div>
+        )}
+        {activeTab === 'abbrev'     && (
+          <div className="flex flex-col overflow-hidden" style={{ height: '100%' }}>
+            <MedAbbreviations />
+          </div>
+        )}
       </div>
     </div>
   );
