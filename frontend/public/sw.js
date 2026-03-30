@@ -1,14 +1,25 @@
-// Roshana Service Worker — cache-first strategy
-const CACHE_NAME = 'roshana-v1';
+// Roshana Service Worker — stale-while-revalidate strategy
+// ─────────────────────────────────────────────────────────────
+// HOW THIS WORKS:
+//   1. Serve cached version instantly (fast load)
+//   2. Simultaneously fetch fresh version from network in background
+//   3. Store fresh version in cache for NEXT visit
+//   4. On next open, the fresh version is served automatically
+//
+// UPDATING: bump CACHE_VERSION on every deploy so old caches are purged.
+// ─────────────────────────────────────────────────────────────
 
-// Assets to pre-cache on install
+const CACHE_VERSION = 'roshana-v2';
+const CACHE_NAME = `cache-${CACHE_VERSION}`;
+
+// Core shell assets — pre-cached on install
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
 ];
 
-// ── Install: pre-cache shell assets ──────────────────────────
+// ── Install: pre-cache shell, activate immediately ───────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
@@ -16,7 +27,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// ── Activate: clean up old caches ────────────────────────────
+// ── Activate: delete ALL old caches ──────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -30,40 +41,51 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ── Fetch: cache-first, fall back to network ─────────────────
+// ── Fetch: stale-while-revalidate ────────────────────────────
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests for same-origin or static assets
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // Skip non-http(s) schemes (chrome-extension, etc.)
   if (!url.protocol.startsWith('http')) return;
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cachedResponse) => {
 
-      return fetch(event.request)
-        .then((response) => {
-          // Only cache valid responses for same-origin static assets
-          if (
-            response.status === 200 &&
-            (url.origin === self.location.origin ||
-              url.pathname.match(/\.(js|css|html|png|svg|ico|woff2?)$/))
-          ) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => {
-          // Offline fallback — return cached index.html for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-        });
+        // Always fetch fresh copy from network in the background
+        const networkFetch = fetch(event.request)
+          .then((networkResponse) => {
+            if (
+              networkResponse &&
+              networkResponse.status === 200 &&
+              networkResponse.type !== 'opaque'
+            ) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            if (event.request.mode === 'navigate') {
+              return cache.match('/index.html');
+            }
+            return new Response('Offline', {
+              status: 503,
+              statusText: 'Service Unavailable',
+            });
+          });
+
+        // Return cached immediately if available, otherwise wait for network
+        return cachedResponse || networkFetch;
+      });
     })
   );
+});
+
+// ── Message handler: allow manual cache skip ─────────────────
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
