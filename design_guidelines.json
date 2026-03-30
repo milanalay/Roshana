@@ -1,0 +1,112 @@
+{
+  "theme": "light",
+  "app_name": "NurseReady",
+  "target_audience": "Student enrolled nurses and healthcare professionals in Australia",
+  "design_philosophy": "Apple Health meets a professional medical app. Clean, un-cluttered, high-contrast, data-centric. No pure glassmorphism over data areas, strictly Flat Solid design.",
+  "typography": {
+    "heading": "Manrope",
+    "body": "IBM Plex Sans",
+    "rules": [
+      "No generic sans like Inter for Headings.",
+      "Headlines > 32px MUST use tracking-tight.",
+      "Overlines / Labels MUST be Uppercase + Tiny + Wide Spacing (tracking-[0.2em]).",
+      "Body text MUST be minimum 16px (text-base) for clinical readability.",
+      "Use explicit weights: font-medium for standard text, font-bold for data points."
+    ]
+  },
+  "colors": {
+    "primary": "#1B3A6B",
+    "accent": "#00A99D",
+    "background": "#FFFFFF",
+    "surface": "#F4F6F9",
+    "text_primary": "#0A0A0A",
+    "text_secondary": "#4B5563",
+    "semantic": {
+      "safe": "#10B981",
+      "caution": "#F59E0B",
+      "critical": "#EF4444",
+      "info": "#3B82F6",
+      "pharmacology": "#8B5CF6",
+      "emergency": "#F97316"
+    },
+    "rules": [
+      "Never use pure black or grey. Use the semantic colors strictly for the categories outlined.",
+      "Use #1B3A6B (Deep Navy) for all primary actions and main headings.",
+      "Use #00A99D (Teal) for secondary accents and selected states."
+    ]
+  },
+  "layout_and_spacing": {
+    "strategy": "Mobile-first PWA, optimized for one-handed use.",
+    "container": "w-full max-w-md mx-auto min-h-screen bg-white relative pb-20 shadow-2xl overflow-hidden",
+    "spacing": "Generous spacing. Tailwind scale: p-4, p-6, p-8. Containers with borders must have internal padding.",
+    "grid": "High Density Grid for Dashboards/Calculators, Bento Grid for Categories (e.g. grid-cols-2 gap-4)."
+  },
+  "components": {
+    "cards": {
+      "style": "Flat Solid. bg-[#F4F6F9]. Subtle rounded corners (rounded-2xl). NO HEAVY SHADOWS. Medical apps require data clarity without visual refraction.",
+      "border": "1px solid #E5E7EB if needed for visual separation.",
+      "internal_padding": "p-5 or p-6"
+    },
+    "buttons": {
+      "primary": "Pill-shaped (rounded-full) or large touch targets (min-h-[48px]). bg-[#1B3A6B] text-white hover:bg-[#152e55] active:scale-95 transition-transform.",
+      "accent": "bg-[#00A99D] text-white hover:bg-[#008f85].",
+      "emergency_fab": "Always visible floating red emergency button. bg-[#EF4444] text-white rounded-full p-4 shadow-[0_8px_30px_rgba(239,68,68,0.4)] fixed bottom-24 right-4 z-50 flex items-center justify-center h-14 w-14."
+    },
+    "bottom_navigation": {
+      "style": "Fixed bottom (bottom-0 left-0 right-0 max-w-md mx-auto). bg-white/95 backdrop-blur-xl border-t border-gray-100 pb-safe pt-2 h-20 grid grid-cols-5 items-center justify-items-center z-40.",
+      "active_state": "text-[#1B3A6B] flex flex-col items-center gap-1 font-medium text-xs",
+      "inactive_state": "text-gray-400 flex flex-col items-center gap-1 font-normal text-xs transition-colors hover:text-gray-600"
+    },
+    "search_bar": {
+      "style": "bg-[#F4F6F9] rounded-2xl h-12 px-4 flex items-center gap-3 text-base text-gray-900 placeholder:text-gray-500 w-full"
+    }
+  },
+  "visual_enhancers": {
+    "icons": "lucide-react. Stroke-width 2 or 2.5 for clarity. High legibility required.",
+    "motion": "Fast, crisp transitions (150-200ms ease). Nurses are rushed, do not add sluggish animations. Micro-interactions on tap/active states only (e.g. active:scale-95)."
+  },
+  "media": {
+    "images": [
+      {
+        "url": "https://images.pexels.com/photos/6129680/pexels-photo-6129680.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "Onboarding / Hero",
+        "description": "Nurse in scrubs caring for a patient, demonstrating healthcare services."
+      },
+      {
+        "url": "https://images.pexels.com/photos/3985149/pexels-photo-3985149.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "Study / Exam Prep",
+        "description": "Medical students in a hallway discussing notes."
+      }
+    ]
+  },
+  "accessibility": {
+    "contrast": "Must meet WCAG 2.1 AA. Normal text below 18px minimum 4.5:1. Primary navy and accent teal provide strong contrast against white.",
+    "touch_targets": "Minimum 44x44px for all interactive elements.",
+    "test_ids": "All interactive and key informational elements MUST include a data-testid attribute."
+  },
+  "instructions_to_main_agent": [
+    "Build the application inside a 'Mobile Frame' container (`max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden bg-white`) so it behaves like a strict PWA mobile app even on desktop.",
+    "Do NOT center align content blocks. Data, lists, and forms must be left-aligned for fast scanning.",
+    "Use solid flat design, avoid glassmorphism for medical data areas. Use glassmorphism ONLY for the bottom navigation bar.",
+    "Implement the persistent Bottom Navigation component with 5 tabs: Home, Search, Calculators, AI Chat, More.",
+    "Implement the persistent Floating Action Button (FAB) for Emergencies, positioned above the bottom nav.",
+    "Color code specific sections based on the semantic palette provided (e.g., Orange for Emergency category, Blue for Info, Green for Safe).",
+    "Minimum body text size is 16px (`text-base`).",
+    "Keep backgrounds stark white, use soft grey (`#F4F6F9`) only for cards and search inputs.",
+    "Add `pb-24` padding to the main scrollable container to ensure the bottom nav doesn't cover content.",
+    "Never use generic placeholder text; implement context-appropriate clinical text.",
+    "Implement Sonner for toast notifications.",
+    "When building Calculators or Drug references, ensure the numbers and critical data are large, bold, and highly legible.",
+    "Add 'Australian' contextual details (e.g. AHPRA, NMBA, Australian SI units)."
+  ],
+  "universal_guidelines": [
+    "Do not converge toward generic outputs.",
+    "Create depth through layered design elements with z-index hierarchy, but keep cards flat.",
+    "Apply specific transitions, NOT 'transition: all'.",
+    "Do not add '.App { text-align: center; }'.",
+    "Use modern button styles.",
+    "NEVER use emoji characters for icons. Use lucide-react.",
+    "Use 2-3x more spacing. Cramped designs look cheap.",
+    "Components MUST use named exports, Pages MUST use default exports."
+  ]
+}
