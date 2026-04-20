@@ -1582,27 +1582,34 @@ export const MedAbbreviations = () => {
               }}
               aria-expanded={isOpen}
             >
-              {/* Card row */}
-              <div className="flex items-center gap-3 px-4 py-3" style={{ minHeight: '52px' }}>
-                {/* Abbreviation badge */}
+              {/* Card row — always wraps, never truncates */}
+              <div className="flex items-start gap-3 px-4 py-3" style={{ minHeight: '52px' }}>
+                {/* Abbreviation badge — fixed width, wraps naturally */}
                 <span
-                  className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-black"
+                  className="flex-shrink-0 px-2.5 py-1.5 rounded-lg font-black text-center mt-0.5"
                   style={{
                     background: `${color}15`,
                     color,
                     fontFamily: FONTS.heading,
-                    minWidth: '52px',
-                    textAlign: 'center',
+                    fontSize: item.abbr.length > 6 ? '10px' : '12px',
+                    minWidth: '60px',
+                    maxWidth: '72px',
+                    lineHeight: '1.3',
+                    wordBreak: 'break-all',
                   }}
                 >
-                  {item.abbr.length > 8 ? item.abbr.slice(0, 8) + '…' : item.abbr}
+                  {item.abbr}
                 </span>
 
-                {/* Full name */}
+                {/* Full name — wraps, never truncates */}
                 <div className="flex-1 min-w-0">
                   <p
-                    className="text-sm font-semibold leading-tight truncate"
-                    style={{ fontFamily: FONTS.body, color: isDanger ? '#EF4444' : C.primary }}
+                    className="text-sm font-semibold leading-snug"
+                    style={{
+                      fontFamily: FONTS.body,
+                      color: isDanger ? '#EF4444' : C.primary,
+                      wordBreak: 'break-word',
+                    }}
                   >
                     {item.full}
                   </p>
@@ -1615,7 +1622,7 @@ export const MedAbbreviations = () => {
                 </div>
 
                 <svg
-                  className="w-4 h-4 flex-shrink-0 transition-transform duration-200"
+                  className="w-4 h-4 flex-shrink-0 transition-transform duration-200 mt-1"
                   style={{ color: '#9CA3AF', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor"
                 >
@@ -1623,31 +1630,46 @@ export const MedAbbreviations = () => {
                 </svg>
               </div>
 
-              {/* Expanded meaning */}
+              {/* Expanded meaning — full text, properly wrapped */}
               {isOpen && (
                 <div
-                  className="px-4 pb-4 pt-2 border-t"
+                  className="px-4 pb-4 pt-3 border-t space-y-3"
                   style={{ borderColor: `${color}20` }}
                 >
-                  {/* Full abbreviation (if truncated) */}
-                  {item.abbr.length > 8 && (
-                    <p className="text-xs font-bold mb-2" style={{ color, fontFamily: FONTS.heading }}>
+                  {/* Full abbreviation expanded prominently */}
+                  <div
+                    className="rounded-xl px-3 py-2"
+                    style={{ background: `${color}10`, border: `1px solid ${color}25` }}
+                  >
+                    <p
+                      className="text-xs font-bold mb-0.5"
+                      style={{ color, fontFamily: FONTS.heading }}
+                    >
                       {item.abbr}
                     </p>
-                  )}
+                    <p
+                      className="text-sm font-semibold leading-snug"
+                      style={{ color, fontFamily: FONTS.body, wordBreak: 'break-word' }}
+                    >
+                      {item.full}
+                    </p>
+                  </div>
+
+                  {/* Meaning */}
                   <p
                     className="text-sm text-gray-800 leading-relaxed"
-                    style={{ fontFamily: FONTS.body }}
+                    style={{ fontFamily: FONTS.body, wordBreak: 'break-word' }}
                   >
                     {item.meaning}
                   </p>
+
                   {isDanger && (
                     <div
-                      className="mt-2 rounded-xl px-3 py-2 flex items-start gap-2"
+                      className="rounded-xl px-3 py-2 flex items-start gap-2"
                       style={{ background: '#EF444415', border: '1px solid #EF444430' }}
                     >
                       <span className="text-sm flex-shrink-0">⛔</span>
-                      <p className="text-xs font-bold text-red-700" style={{ fontFamily: FONTS.body }}>
+                      <p className="text-xs font-bold text-red-700 leading-relaxed" style={{ fontFamily: FONTS.body }}>
                         This abbreviation must NOT be used in clinical documentation — it has been associated with serious medication errors.
                       </p>
                     </div>
