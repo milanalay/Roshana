@@ -714,42 +714,194 @@ const ClassGroupView = ({ group, onSelectDrug, onBack }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// SearchResults — flat list of drug + class matches
+// ─────────────────────────────────────────────────────────────
+const SearchResults = ({ query, onSelectDrug, onSelectGroup }) => {
+  const q = query.toLowerCase().trim();
+
+  // Match drug rows across all subclasses
+  const drugMatches = [];
+  CLASS_STRUCTURE.forEach((group) => {
+    group.subclasses.forEach((sub) => {
+      sub.drugs.forEach((name) => {
+        const drug = findDrug(name);
+        const ihna = IHNA[name.toLowerCase()] || (drug ? IHNA[drug.genericName.toLowerCase()] : null);
+        const displayName = drug ? drug.genericName : name;
+        const brands = drug?.brandNames?.join(' ') || '';
+        const pronunciation = ihna?.pronunciation || '';
+        const note = ihna?.note || '';
+        const searchStr = [displayName, brands, pronunciation, note, sub.label, group.label].join(' ').toLowerCase();
+        if (searchStr.includes(q)) {
+          drugMatches.push({ name, drug, ihna, group, sub, displayName });
+        }
+      });
+    });
+  });
+
+  // Match class groups by label
+  const groupMatches = CLASS_STRUCTURE.filter((g) =>
+    g.label.toLowerCase().includes(q) ||
+    g.subclasses.some((s) => s.label.toLowerCase().includes(q))
+  );
+
+  const totalResults = drugMatches.length + groupMatches.length;
+
+  if (totalResults === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <span className="text-4xl mb-3">🔍</span>
+        <p className="text-sm font-bold text-gray-400" style={{ fontFamily: FONTS.heading }}>
+          No results for "{query}"
+        </p>
+        <p className="text-xs text-gray-400 mt-1" style={{ fontFamily: FONTS.body }}>
+          Try a drug name, brand name, or class
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pt-3 pb-8 space-y-4">
+      {/* Class group matches */}
+      {groupMatches.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2" style={{ fontFamily: FONTS.body }}>
+            Classes ({groupMatches.length})
+          </p>
+          <div className="space-y-2">
+            {groupMatches.map((group) => (
+              <button
+                key={group.id}
+                onClick={() => onSelectGroup(group)}
+                className="w-full bg-white rounded-2xl flex items-center gap-3 px-4 py-3 text-left transition-all active:scale-[0.99]"
+                style={{ border: `1.5px solid ${group.color}30`, minHeight: '52px' }}
+              >
+                <span
+                  className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+                  style={{ background: `${group.color}15` }}
+                >
+                  {group.emoji}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ fontFamily: FONTS.heading, color: group.color }}>
+                    {group.label}
+                  </p>
+                  <p className="text-xs text-gray-400" style={{ fontFamily: FONTS.body }}>
+                    {group.subclasses.length} subclasses
+                  </p>
+                </div>
+                <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#D1D5DB' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Drug matches */}
+      {drugMatches.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2" style={{ fontFamily: FONTS.body }}>
+            Drugs ({drugMatches.length})
+          </p>
+          <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1.5px solid #E5E7EB' }}>
+            {drugMatches.map(({ name, drug, ihna, group, sub }, i) => {
+              const isImportant = ihna?.important === true;
+              const displayName = drug ? drug.genericName : name.charAt(0).toUpperCase() + name.slice(1);
+              const pronunciation = ihna?.pronunciation;
+              const brandName = drug?.brandNames?.[0];
+              return (
+                <button
+                  key={name + group.id}
+                  onClick={() => drug && onSelectDrug(drug)}
+                  className="w-full flex items-start gap-3 px-4 py-3 text-left transition-all active:scale-[0.98]"
+                  style={{
+                    minHeight: '52px',
+                    background: isImportant ? '#FFFBEB' : '#FFFFFF',
+                    borderBottom: i < drugMatches.length - 1 ? '1px solid #F3F4F6' : 'none',
+                    cursor: drug ? 'pointer' : 'default',
+                  }}
+                >
+                  {/* Star */}
+                  <span className="flex-shrink-0 mt-0.5 w-5 text-center">
+                    {isImportant
+                      ? <span style={{ color: C.star, fontSize: '12px' }}>⭐</span>
+                      : <span style={{ color: '#E5E7EB', fontSize: '9px' }}>●</span>
+                    }
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold" style={{ fontFamily: FONTS.heading, color: group.color }}>
+                        {displayName}
+                      </p>
+                      {drug?.schedule && (
+                        <span
+                          className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: drug.schedule === 'S8' ? '#EF444420' : `${group.color}15`,
+                            color: drug.schedule === 'S8' ? '#EF4444' : group.color,
+                            fontSize: '9px', fontFamily: FONTS.body,
+                          }}
+                        >
+                          {drug.schedule}
+                        </span>
+                      )}
+                    </div>
+                    {pronunciation && (
+                      <p className="text-xs text-gray-400" style={{ fontFamily: FONTS.body }}>{pronunciation}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: FONTS.body }}>
+                      {brandName && <span>{brandName} · </span>}
+                      <span style={{ color: group.color + 'CC' }}>{sub.label}</span>
+                    </p>
+                  </div>
+                  {drug && (
+                    <svg className="w-4 h-4 flex-shrink-0 mt-1" style={{ color: '#D1D5DB' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
 // ClassesPage — default export
 // ─────────────────────────────────────────────────────────────
 const ClassesPage = ({ onNavigate }) => {
-  const [view, setView]             = useState('list');    // 'list' | 'group'
+  const [view, setView]               = useState('list');   // 'list' | 'group'
   const [activeGroup, setActiveGroup] = useState(null);
   const [selectedDrug, setSelectedDrug] = useState(null);
-  const listScrollRef = useRef(null);
+  const [query, setQuery]             = useState('');
+  const listScrollRef                 = useRef(null);
   const [listScrollPos, setListScrollPos] = useState(0);
+  const searchInputRef                = useRef(null);
 
-  // Save scroll position before navigating into a group
+  const isSearching = query.trim().length > 0;
+
   const handleOpenGroup = useCallback((group) => {
-    if (listScrollRef.current) {
-      setListScrollPos(listScrollRef.current.scrollTop);
-    }
+    if (listScrollRef.current) setListScrollPos(listScrollRef.current.scrollTop);
     setActiveGroup(group);
     setView('group');
+    setQuery('');
   }, []);
 
-  // Restore scroll position when going back
   const handleBack = useCallback(() => {
     setView('list');
     setActiveGroup(null);
     setTimeout(() => {
-      if (listScrollRef.current) {
-        listScrollRef.current.scrollTop = listScrollPos;
-      }
+      if (listScrollRef.current) listScrollRef.current.scrollTop = listScrollPos;
     }, 10);
   }, [listScrollPos]);
 
-  const handleSelectDrug = useCallback((drug) => {
-    setSelectedDrug(drug);
-  }, []);
-
-  const handleCloseDetail = useCallback(() => {
-    setSelectedDrug(null);
-  }, []);
+  const handleSelectDrug = useCallback((drug) => setSelectedDrug(drug), []);
+  const handleCloseDetail = useCallback(() => setSelectedDrug(null), []);
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F9]" style={{ maxWidth: '448px', margin: '0 auto' }}>
@@ -758,88 +910,117 @@ const ClassesPage = ({ onNavigate }) => {
       {view === 'list' && (
         <>
           {/* Header */}
-          <div className="bg-white px-5 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="bg-white px-5 pt-6 pb-3 border-b border-gray-100 flex-shrink-0 space-y-3">
+            <div className="flex items-center gap-2">
               <span className="text-2xl">🏫</span>
               <h1 className="text-xl font-bold text-[#1B3A6B]" style={{ fontFamily: FONTS.heading }}>
                 Drug Classes
               </h1>
             </div>
-            <p className="text-xs text-gray-400" style={{ fontFamily: FONTS.body }}>
-              Tap a class to explore subclasses and drugs · ⭐ = IHNA important
-            </p>
-          </div>
 
-          {/* Legend */}
-          <div
-            className="flex-shrink-0 flex items-center gap-4 px-5 py-2.5 border-b border-gray-100"
-            style={{ background: '#FFFBEB' }}
-          >
-            <div className="flex items-center gap-1.5">
-              <span style={{ color: C.star, fontSize: '14px' }}>⭐</span>
-              <p className="text-xs font-bold text-amber-700" style={{ fontFamily: FONTS.body }}>
-                Highlighted by your IHNA educator
-              </p>
-            </div>
-          </div>
-
-          {/* Class group list */}
-          <div ref={listScrollRef} className="flex-1 overflow-y-auto px-4 pt-4 pb-8 space-y-3">
-            {CLASS_STRUCTURE.map((group) => {
-              const totalDrugs = group.subclasses.reduce((a, s) => a + s.drugs.length, 0);
-              const totalImportant = group.subclasses.reduce((acc, s) => {
-                return acc + s.drugs.filter((name) => {
-                  const ihna = IHNA[name.toLowerCase()];
-                  if (ihna?.important) return true;
-                  const drug = findDrug(name);
-                  return drug ? IHNA[drug.genericName.toLowerCase()]?.important === true : false;
-                }).length;
-              }, 0);
-
-              return (
+            {/* Search bar */}
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                data-testid="classes-search-input"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search drug, brand, class, pronunciation…"
+                className="w-full pl-9 pr-10 py-2.5 bg-[#F4F6F9] rounded-xl text-sm border border-gray-200 outline-none focus:ring-2 focus:ring-[#00A99D] transition-shadow"
+                style={{ fontFamily: FONTS.body, minHeight: '44px' }}
+              />
+              {query && (
                 <button
-                  key={group.id}
-                  data-testid={`class-group-btn-${group.id}`}
-                  onClick={() => handleOpenGroup(group)}
-                  className="w-full bg-white rounded-2xl flex items-center gap-4 px-4 py-4 text-left transition-all active:scale-[0.99]"
-                  style={{
-                    border: `1.5px solid ${group.color}30`,
-                    minHeight: '72px',
-                  }}
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center"
+                  aria-label="Clear search"
                 >
-                  {/* Colour dot */}
-                  <span
-                    className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{ background: `${group.color}15` }}
-                  >
-                    {group.emoji}
-                  </span>
-
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm font-bold leading-tight"
-                      style={{ fontFamily: FONTS.heading, color: group.color }}
-                    >
-                      {group.label}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: FONTS.body }}>
-                      {group.subclasses.length} subclass{group.subclasses.length !== 1 ? 'es' : ''} · {totalDrugs} drugs
-                      {totalImportant > 0 && (
-                        <span style={{ color: C.star }}> · ⭐ {totalImportant}</span>
-                      )}
-                    </p>
-                  </div>
-
-                  <svg className="w-5 h-5 flex-shrink-0" style={{ color: group.color + '80' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-              );
-            })}
+              )}
+            </div>
 
-            <p className="text-center text-xs text-gray-300 pt-2 pb-4" style={{ fontFamily: FONTS.body }}>
-              Drug list based on IHNA HLT54121 Diploma of Nursing · Semester 2 OSCA
-            </p>
+            {/* Legend — only show when not searching */}
+            {!isSearching && (
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}
+              >
+                <span style={{ color: C.star, fontSize: '14px' }}>⭐</span>
+                <p className="text-xs font-bold text-amber-700" style={{ fontFamily: FONTS.body }}>
+                  Highlighted by your IHNA educator (HLT54121)
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Content — search results OR class group list */}
+          <div
+            ref={isSearching ? null : listScrollRef}
+            className="flex-1 overflow-y-auto"
+          >
+            {isSearching ? (
+              <SearchResults
+                query={query}
+                onSelectDrug={handleSelectDrug}
+                onSelectGroup={handleOpenGroup}
+              />
+            ) : (
+              <div ref={listScrollRef} className="px-4 pt-4 pb-8 space-y-3">
+                {CLASS_STRUCTURE.map((group) => {
+                  const totalDrugs = group.subclasses.reduce((a, s) => a + s.drugs.length, 0);
+                  const totalImportant = group.subclasses.reduce((acc, s) => {
+                    return acc + s.drugs.filter((name) => {
+                      const ihna = IHNA[name.toLowerCase()];
+                      if (ihna?.important) return true;
+                      const drug = findDrug(name);
+                      return drug ? IHNA[drug.genericName.toLowerCase()]?.important === true : false;
+                    }).length;
+                  }, 0);
+
+                  return (
+                    <button
+                      key={group.id}
+                      data-testid={`class-group-btn-${group.id}`}
+                      onClick={() => handleOpenGroup(group)}
+                      className="w-full bg-white rounded-2xl flex items-center gap-4 px-4 py-4 text-left transition-all active:scale-[0.99]"
+                      style={{ border: `1.5px solid ${group.color}30`, minHeight: '72px' }}
+                    >
+                      <span
+                        className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center text-2xl"
+                        style={{ background: `${group.color}15` }}
+                      >
+                        {group.emoji}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold leading-tight" style={{ fontFamily: FONTS.heading, color: group.color }}>
+                          {group.label}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: FONTS.body }}>
+                          {group.subclasses.length} subclass{group.subclasses.length !== 1 ? 'es' : ''} · {totalDrugs} drugs
+                          {totalImportant > 0 && <span style={{ color: C.star }}> · ⭐ {totalImportant}</span>}
+                        </p>
+                      </div>
+                      <svg className="w-5 h-5 flex-shrink-0" style={{ color: group.color + '80' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  );
+                })}
+                <p className="text-center text-xs text-gray-300 pt-2 pb-4" style={{ fontFamily: FONTS.body }}>
+                  Drug list based on IHNA HLT54121 Diploma of Nursing · Semester 2 OSCA
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -865,3 +1046,4 @@ const ClassesPage = ({ onNavigate }) => {
 };
 
 export default ClassesPage;
+
